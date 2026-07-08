@@ -1,7 +1,8 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const { SpeechClient } = require('@google-cloud/speech');
+const axios = require('axios');
+const FormData = require('form-data');
 const { generateJSON } = require('../lib/gemini');
 const { createClient } = require('@supabase/supabase-js');
 const { runDNAPipeline } = require('../lib/dna');
@@ -11,8 +12,21 @@ const upload = multer({ dest: 'uploads/' });
 
 const supabaseAdmin = require('../lib/supabase');
 
-// Initialize Google Cloud Speech Client
-const speechClient = new SpeechClient();
+async function transcribeAudio(audioBuffer) {
+  const form = new FormData();
+  form.append('file', audioBuffer, { filename: 'audio.webm', contentType: 'audio/webm' });
+  form.append('model', 'saarika:v2');
+  form.append('language_code', 'unknown'); // auto-detects Indian language
+
+  const res = await axios.post('https://api.sarvam.ai/speech-to-text', form, {
+    headers: {
+      'api-subscription-key': process.env.SARVAM_API_KEY,
+      ...form.getHeaders(),
+    },
+  });
+
+  return { transcript: res.data.transcript, detectedLanguage: res.data.language_code };
+}
 
 // POST /api/voice/submit
 router.post('/submit', upload.single('audio'), async (req, res) => {
@@ -24,35 +38,13 @@ router.post('/submit', upload.single('audio'), async (req, res) => {
     const { ward_id } = req.body;
 
     // ==========================================
-    // STEP 1: Google Cloud Speech-to-Text
+    // STEP 1: Sarvam Speech-to-Text
     // ==========================================
-    const audioBytes = fs.readFileSync(req.file.path).toString('base64');
-    
-    const request = {
-      audio: {
-        content: audioBytes,
-      },
-      config: {
-        encoding: 'WEBM_OPUS',
-        sampleRateHertz: 48000,
-        languageCode: 'hi-IN',
-        alternativeLanguageCodes: ['kn-IN', 'ta-IN', 'te-IN', 'ml-IN', 'en-IN'],
-        enableAutomaticPunctuation: true,
-        model: 'latest_long'
-      },
-    };
-
-    const [response] = await speechClient.recognize(request);
+    const audioBuffer = fs.readFileSync(req.file.path);
+    const { transcript, detectedLanguage } = await transcribeAudio(audioBuffer);
     
     // Clean up temp file
     fs.unlinkSync(req.file.path);
-
-    const transcript = response.results
-      .map(result => result.alternatives[0].transcript)
-      .join('\n');
-      
-    // Extract detected language if available, else default to hi-IN
-    const detectedLanguage = response.results[0]?.languageCode || 'hi-IN';
 
     if (!transcript?.trim()) {
       return res.status(400).json({ error: 'Could not transcribe audio' });

@@ -1,15 +1,44 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;
+const axios = require('axios');
 const { generateJSON } = require('../lib/gemini');
 const supabase = require('../lib/supabase');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-// Initialize Google Document AI Client
-const documentAIClient = new DocumentProcessorServiceClient();
+// Initialize Sarvam async document extraction
+async function extractPdfText(pdfBuffer) {
+  const HEADERS = { 'api-subscription-key': process.env.SARVAM_API_KEY };
+
+  // 1. Create the job
+  const jobRes = await axios.post('https://api.sarvam.ai/doc-digitization/job/v1', {
+    job_parameters: { language: 'en-IN', output_format: 'md' }
+  }, { headers: HEADERS });
+
+  const jobId = jobRes.data.job_id;
+  const uploadUrl = jobRes.data.input_storage_path;
+
+  // 2. Upload the PDF
+  await axios.put(uploadUrl, pdfBuffer, { headers: { 'Content-Type': 'application/pdf' } });
+
+  // 3. Trigger processing (Optional based on Sarvam API, assuming start is needed if they mentioned it)
+  // await axios.post(`https://api.sarvam.ai/doc-digitization/job/v1/${jobId}/start`, {}, { headers: HEADERS });
+
+  // 4. Poll until done
+  let status = 'pending';
+  let output;
+  while (status !== 'completed') {
+    await new Promise(r => setTimeout(r, 3000));
+    const statusRes = await axios.get(`https://api.sarvam.ai/doc-digitization/job/v1/${jobId}`, { headers: HEADERS });
+    status = statusRes.data.status;
+    if (status === 'completed') output = statusRes.data.output;
+    if (status === 'failed') throw new Error('Sarvam doc job failed');
+  }
+
+  return output; // markdown text
+}
 
 // POST /api/ocr/import-dev-plan
 router.post('/import-dev-plan', upload.single('document'), async (req, res) => {
@@ -19,29 +48,10 @@ router.post('/import-dev-plan', upload.single('document'), async (req, res) => {
 
   try {
     // ==========================================
-    // STEP 1: Google Document AI Extractor
+    // STEP 1: Sarvam Document Extractor
     // ==========================================
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
-    const processorId = process.env.DOCUMENT_AI_PROCESSOR_ID;
-    
-    if (!projectId || !processorId) {
-      throw new Error("Missing Google Cloud credentials or Document AI Processor ID");
-    }
-
-    const name = `projects/${projectId}/locations/us/processors/${processorId}`;
-    const encodedFile = fs.readFileSync(req.file.path).toString('base64');
-
-    const request = {
-      name,
-      rawDocument: {
-        content: encodedFile,
-        mimeType: req.file.mimetype || 'application/pdf',
-      },
-    };
-
-    const [result] = await documentAIClient.processDocument(request);
-    const { document } = result;
-    const extractedText = document.text;
+    const pdfBuffer = fs.readFileSync(req.file.path);
+    const extractedText = await extractPdfText(pdfBuffer);
 
     // Clean up temp file
     fs.unlinkSync(req.file.path);

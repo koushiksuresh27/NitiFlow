@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   const glassCardRef = useRef<HTMLDivElement>(null);
@@ -79,14 +80,14 @@ export default function Home() {
             <span className="font-title-lg text-title-lg font-bold text-brand-navy">NitiFlow</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">For Citizens</a>
-            <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">For MPs</a>
+            <Link href="/citizen" className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200">For Citizens</Link>
+            <Link href="/dashboard" className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200">For MPs</Link>
             <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">How it works</a>
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-brand-navy text-white px-6 py-2 rounded-lg font-label-md text-label-md hover:bg-on-secondary-fixed transition-all active:scale-95">
+            <Link href="/dashboard" className="bg-brand-navy text-white px-6 py-2 rounded-lg font-label-md text-label-md hover:bg-on-secondary-fixed transition-all active:scale-95">
               MP Login
-            </button>
+            </Link>
             <button className="md:hidden text-brand-navy">
               <span className="material-symbols-outlined">menu</span>
             </button>
@@ -111,12 +112,12 @@ export default function Home() {
                   NitiFlow turns thousands of citizen voices into one evidence-backed priority list for your constituency. Empowering MPs with AI-driven intelligence.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="bg-brand-saffron text-white px-8 py-4 rounded-lg font-title-lg text-title-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                  <Link href="/citizen" className="inline-block text-center bg-brand-saffron text-white px-8 py-4 rounded-lg font-title-lg text-title-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
                     Submit a Grievance
-                  </button>
-                  <button className="border-2 border-brand-navy text-brand-navy px-8 py-4 rounded-lg font-title-lg text-title-lg hover:bg-brand-navy hover:text-white transition-all">
+                  </Link>
+                  <Link href="/dashboard" className="inline-block text-center border-2 border-brand-navy text-brand-navy px-8 py-4 rounded-lg font-title-lg text-title-lg hover:bg-brand-navy hover:text-white transition-all">
                     View Dashboard
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

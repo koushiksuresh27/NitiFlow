@@ -16,6 +16,7 @@ app.use('/api/priorities', require('./routes/priorities'));
 app.use('/api/wards', require('./routes/wards'));
 app.use('/api/ocr', require('./routes/ocr'));
 app.use('/api/aria', require('./routes/aria'));
+app.use('/api/stats', require('./routes/stats'));
 
 // Health Check
 app.get('/api/health', (req, res) => {

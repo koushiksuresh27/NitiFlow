@@ -72,3 +72,39 @@ INSERT INTO dev_plan_projects (ward_id, project_name, category, estimated_cost, 
 ((SELECT id FROM wards WHERE name = 'Attur' LIMIT 1), 'Attur Main Road Asphalting', 'roads', 5000000.00, 'Relaying 3km of arterial road with proper drainage'),
 ((SELECT id FROM wards WHERE name = 'Yelahanka Satellite Town' LIMIT 1), 'Underground Drainage System Phase 2', 'sanitation', 8000000.00, 'Extending UGD to newly developed layouts'),
 ((SELECT id FROM wards WHERE name = 'Jakkur' LIMIT 1), 'Youth Skill Development Centre', 'skills', 3500000.00, 'Building a vocational training centre for electronics and IT skills');
+
+-- ==========================================
+-- 4. TRIGGERS AND REALTIME
+-- ==========================================
+
+-- Auto-assign complaint to nearest ward to center if ward_id is null
+CREATE OR REPLACE FUNCTION auto_assign_ward()
+RETURNS TRIGGER AS $$
+DECLARE
+  best_ward uuid;
+BEGIN
+  IF NEW.ward_id IS NULL THEN
+    SELECT id INTO best_ward
+    FROM public.wards
+    ORDER BY sqrt(power(lat - 13.02, 2) + power(lng - 77.54, 2)) ASC
+    LIMIT 1;
+
+    IF best_ward IS NOT NULL THEN
+      NEW.ward_id = best_ward;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS complaint_auto_assign_ward ON public.complaints;
+CREATE TRIGGER complaint_auto_assign_ward
+  BEFORE INSERT ON public.complaints
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_assign_ward();
+
+-- Enable Supabase Realtime for frontend live updates
+ALTER TABLE complaint_clusters REPLICA IDENTITY FULL;
+-- Note: the table must also be added to the supabase_realtime publication manually in the dashboard or via:
+-- begin; drop publication if exists supabase_realtime; create publication supabase_realtime for table complaint_clusters; commit;

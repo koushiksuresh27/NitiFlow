@@ -4,6 +4,9 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, Circle, InfoWindow } from "@react-google-maps/api";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import Link from "next/link";
+import AriaChat from "@/components/AriaChat";
+import DevPlanImport from "@/components/DevPlanImport";
+import { createClient } from "@supabase/supabase-js";
 
 function interpolateColor(color1: string, color2: string, factor: number) {
   const result = color1.slice(1).match(/.{2}/g)!.map((hex, i) => {
@@ -34,8 +37,9 @@ export default function MPDashboard() {
   const [selectedWardFilter, setSelectedWardFilter] = useState<string>("all");
   const [selectedMapWard, setSelectedMapWard] = useState<any | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<any | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
-  const [isAriaOpen, setIsAriaOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -72,7 +76,37 @@ export default function MPDashboard() {
     fetchPriorities();
     const interval = setInterval(fetchPriorities, 15000);
     return () => clearInterval(interval);
-  }, [selectedWardFilter]);
+  }, [selectedWardFilter, refreshTrigger]);
+
+  useEffect(() => {
+    // Supabase Realtime for live updates on new complaints
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+    
+    // Only init if we actually have env vars to avoid crashing in dev without them
+    if (supabaseUrl !== 'https://placeholder.supabase.co') {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const channel = supabase.channel('complaint_clusters_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'complaint_clusters' },
+          (payload) => {
+            console.log('Realtime update received:', payload);
+            setRefreshTrigger(prev => prev + 1);
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, []);
+
+  const refreshPriorities = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   const stats = useMemo(() => {
     let complaints = 0;
@@ -157,20 +191,14 @@ export default function MPDashboard() {
             <span className="material-symbols-outlined">map</span>
             Ward Map
           </Link>
-          <Link href="#" className="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container p-3 rounded-lg font-label-md transition">
+          <button onClick={() => setIsImportModalOpen(true)} className="w-full flex items-center gap-3 text-on-surface-variant hover:bg-surface-container p-3 rounded-lg font-label-md transition">
             <span className="material-symbols-outlined">upload_file</span>
             Import Dev Plan
-          </Link>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-surface-container-highest">
-          <button 
-            onClick={() => setIsAriaOpen(!isAriaOpen)}
-            className="w-full bg-brand-saffron text-white py-3 rounded-lg font-label-md flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition active:scale-95"
-          >
-            <span className="material-symbols-outlined text-lg">smart_toy</span>
-            Ask Aria
-          </button>
+          {/* Real Aria is fixed on bottom right. This can stay as visual filler or be removed. Removing. */}
         </div>
       </aside>
 
@@ -208,7 +236,7 @@ export default function MPDashboard() {
               </div>
             </div>
             
-            <button className="bg-brand-navy text-white px-5 py-2 rounded-lg font-label-md hover:bg-on-secondary-fixed transition flex items-center gap-2">
+            <button onClick={() => setIsImportModalOpen(true)} className="bg-brand-navy text-white px-5 py-2 rounded-lg font-label-md hover:bg-on-secondary-fixed transition flex items-center gap-2">
               <span className="material-symbols-outlined text-sm">cloud_upload</span>
               <span className="hidden sm:inline">Import Plan</span>
             </button>
@@ -499,38 +527,13 @@ export default function MPDashboard() {
         </div>
       </div>
       
-      {/* Mock Aria Overlay */}
-      <AnimatePresence>
-        {isAriaOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 left-[280px] w-80 bg-white rounded-xl shadow-2xl border border-surface-container-highest z-50 overflow-hidden flex flex-col"
-          >
-            <div className="bg-brand-navy p-4 flex justify-between items-center text-white">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined">smart_toy</span>
-                <span className="font-bold">Aria Intelligence</span>
-              </div>
-              <button onClick={() => setIsAriaOpen(false)} className="hover:text-gray-300">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="p-4 h-64 bg-surface-bright flex flex-col justify-end">
-              <div className="bg-white p-3 rounded-lg rounded-bl-none shadow-sm text-sm border border-surface-container mb-4">
-                Hello MP Sharma. I have real-time access to the constituency data. Which ward's priorities would you like me to analyze?
-              </div>
-            </div>
-            <div className="p-3 border-t border-surface-container-highest flex">
-              <input type="text" placeholder="Ask Aria..." className="flex-1 bg-surface-container rounded-l-lg p-2 text-sm outline-none" />
-              <button className="bg-brand-saffron text-white px-3 rounded-r-lg">
-                <span className="material-symbols-outlined text-sm">send</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AriaChat wardId={selectedWardFilter} />
+      
+      <DevPlanImport 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        onImportComplete={refreshPriorities} 
+      />
     </div>
   );
 }

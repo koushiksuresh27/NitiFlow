@@ -1,0 +1,38 @@
+LOCAL AREA DEVELOPMENT PLAN 2026 - BENGALURU NORTH
+--------------------------------------------------
+
+1. Government High School Modernization
+Location: Kempegowda Ward
+Category: schools
+Estimated Budget: ₹ 20,00,000
+Details: Complete overhaul of the existing primary school including 4 new smart classrooms and a science laboratory.
+
+2. Primary Health Centre Extension
+Location: Chowdeshwari Ward
+Category: health
+Estimated Budget: ₹ 35,00,000
+Details: Construction of a new maternity wing and upgrading current hospital beds with modern equipment.
+
+3. Attur Arterial Road Relay
+Location: Attur
+Category: roads
+Estimated Budget: ₹ 50,00,000
+Details: Relaying 3 kilometers of the main arterial road including proper storm water drainage on both sides.
+
+4. Comprehensive Drainage Overhaul
+Location: Jakkur
+Category: sanitation
+Estimated Budget: ₹ 85,00,000
+Details: Extending the underground drainage system to newly developed layouts to prevent monsoon flooding.
+
+5. LED Street Lighting Implementation
+Location: Thanisandra
+Category: street_lights
+Estimated Budget: ₹ 12,00,000
+Details: Installation of 200 high-efficiency LED street lights across major intersections for better night safety.
+
+6. Youth Vocational Skill Centre
+Location: Vidyaranyapura
+Category: skills
+Estimated Budget: ₹ 45,00,000
+Details: Building a state-of-the-art vocational training centre focused on electronics, IT skills, and tailoring.
