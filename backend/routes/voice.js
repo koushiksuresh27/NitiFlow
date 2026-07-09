@@ -12,20 +12,34 @@ const upload = multer({ dest: 'uploads/' });
 
 const supabaseAdmin = require('../lib/supabase');
 
-async function transcribeAudio(audioBuffer) {
-  const form = new FormData();
-  form.append('file', audioBuffer, { filename: 'audio.webm', contentType: 'audio/webm' });
-  form.append('model', 'saarika:v2');
-  form.append('language_code', 'unknown'); // auto-detects Indian language
-
-  const res = await axios.post('https://api.sarvam.ai/speech-to-text', form, {
-    headers: {
-      'api-subscription-key': process.env.SARVAM_API_KEY,
-      ...form.getHeaders(),
-    },
+async function transcribeWithSarvam(audioFilePath) {
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(audioFilePath), {
+    filename: 'audio.webm',
+    contentType: 'audio/webm'
   });
+  formData.append('model', 'saarika:v2.5');
+  formData.append('language_code', 'unknown');
 
-  return { transcript: res.data.transcript, detectedLanguage: res.data.language_code };
+  const response = await axios.post(
+    'https://api.sarvam.ai/speech-to-text',
+    formData,
+    {
+      headers: {
+        ...formData.getHeaders(),
+        'api-subscription-key': process.env.SARVAM_API_KEY
+      }
+    }
+  );
+
+  const transcript = response.data.transcript;
+  const detectedLanguage = response.data.language_code || 'hi-IN';
+
+  if (!transcript) {
+    throw new Error('No speech detected. Please speak clearly and try again.');
+  }
+
+  return { transcript, detectedLanguage, confidence: 0.95 };
 }
 
 // POST /api/voice/submit
@@ -40,8 +54,7 @@ router.post('/submit', upload.single('audio'), async (req, res) => {
     // ==========================================
     // STEP 1: Sarvam Speech-to-Text
     // ==========================================
-    const audioBuffer = fs.readFileSync(req.file.path);
-    const { transcript, detectedLanguage } = await transcribeAudio(audioBuffer);
+    const { transcript, detectedLanguage } = await transcribeWithSarvam(req.file.path);
     
     // Clean up temp file
     fs.unlinkSync(req.file.path);
