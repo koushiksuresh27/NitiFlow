@@ -24,6 +24,7 @@ interface ComplaintResult {
 export default function CitizenPage() {
   const [mode, setMode] = useState<Mode>("idle");
   const [inputTab, setInputTab] = useState<InputTab>("voice");
+  const [selectedLang, setSelectedLang] = useState<'en' | 'hi' | 'kn'>('en'); // TODO: wire to real i18n post-hackathon
   const [wards, setWards] = useState<Ward[]>([]);
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [textInput, setTextInput] = useState("");
@@ -205,9 +206,24 @@ export default function CitizenPage() {
           </h1>
         </div>
         <div className="flex gap-1 bg-surface-container-low p-1 rounded-full">
-          <span className="px-3 py-1 bg-white shadow-sm rounded-full text-xs font-semibold text-brand-charcoal">EN</span>
-          <span className="px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant">हिंदी</span>
-          <span className="px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant">ಕನ್ನಡ</span>
+          <button 
+            onClick={() => setSelectedLang('en')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedLang === 'en' ? 'bg-white shadow-sm text-brand-charcoal' : 'text-on-surface-variant hover:bg-white/50'}`}
+          >
+            EN
+          </button>
+          <button 
+            onClick={() => setSelectedLang('hi')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedLang === 'hi' ? 'bg-white shadow-sm text-brand-charcoal' : 'text-on-surface-variant hover:bg-white/50'}`}
+          >
+            हिंदी
+          </button>
+          <button 
+            onClick={() => setSelectedLang('kn')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedLang === 'kn' ? 'bg-white shadow-sm text-brand-charcoal' : 'text-on-surface-variant hover:bg-white/50'}`}
+          >
+            ಕನ್ನಡ
+          </button>
         </div>
       </header>
 

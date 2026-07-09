@@ -40,6 +40,7 @@ export default function MPDashboard() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'overview' | 'feed' | 'map'>('overview');
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -179,18 +180,18 @@ export default function MPDashboard() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Link href="#" className="flex items-center gap-3 bg-brand-navy/10 text-brand-navy p-3 rounded-lg font-label-md">
+          <button onClick={() => setViewMode('overview')} className={`w-full flex items-center gap-3 p-3 rounded-lg font-label-md transition ${viewMode === 'overview' ? 'bg-brand-navy/10 text-brand-navy' : 'text-on-surface-variant hover:bg-surface-container'}`}>
             <span className="material-symbols-outlined">home</span>
             Overview
-          </Link>
-          <Link href="#" className="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container p-3 rounded-lg font-label-md transition">
+          </button>
+          <button onClick={() => setViewMode('feed')} className={`w-full flex items-center gap-3 p-3 rounded-lg font-label-md transition ${viewMode === 'feed' ? 'bg-brand-navy/10 text-brand-navy' : 'text-on-surface-variant hover:bg-surface-container'}`}>
             <span className="material-symbols-outlined">format_list_bulleted</span>
             Priority Feed
-          </Link>
-          <Link href="#" className="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container p-3 rounded-lg font-label-md transition">
+          </button>
+          <button onClick={() => setViewMode('map')} className={`w-full flex items-center gap-3 p-3 rounded-lg font-label-md transition ${viewMode === 'map' ? 'bg-brand-navy/10 text-brand-navy' : 'text-on-surface-variant hover:bg-surface-container'}`}>
             <span className="material-symbols-outlined">map</span>
             Ward Map
-          </Link>
+          </button>
           <button onClick={() => setIsImportModalOpen(true)} className="w-full flex items-center gap-3 text-on-surface-variant hover:bg-surface-container p-3 rounded-lg font-label-md transition">
             <span className="material-symbols-outlined">upload_file</span>
             Import Dev Plan
@@ -246,8 +247,9 @@ export default function MPDashboard() {
         {/* Dashboard Panels */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           
-          {/* Left Panel - Google Maps (55%) */}
-          <div className="w-full lg:w-[55%] h-1/2 lg:h-full border-b lg:border-b-0 lg:border-r border-surface-container-highest relative">
+          {/* Left Panel - Google Maps */}
+          {(viewMode === 'overview' || viewMode === 'map') && (
+          <div className={`w-full ${viewMode === 'overview' ? 'lg:w-[55%] h-1/2' : 'h-full'} lg:h-full border-b lg:border-b-0 lg:border-r border-surface-container-highest relative`}>
             {isLoaded ? (
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
@@ -310,9 +312,11 @@ export default function MPDashboard() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Right Panel - Priority Feed (45%) */}
-          <div className="w-full lg:w-[45%] h-1/2 lg:h-full bg-surface-bright overflow-y-auto custom-scrollbar">
+          {/* Right Panel - Priority Feed */}
+          {(viewMode === 'overview' || viewMode === 'feed') && (
+          <div className={`w-full ${viewMode === 'overview' ? 'lg:w-[45%] h-1/2' : 'h-full'} lg:h-full bg-surface-bright overflow-y-auto custom-scrollbar`}>
             <div className="p-6 sticky top-0 bg-surface-bright/95 backdrop-blur-sm border-b border-surface-container-highest z-10 flex justify-between items-center">
               <div>
                 <h3 className="font-headline-sm text-brand-charcoal">Priority Rankings</h3>
@@ -405,6 +409,7 @@ export default function MPDashboard() {
               </LayoutGroup>
             </div>
           </div>
+          )}
 
           {/* ScorePanel Drawer (Absolute positioned within the relative container) */}
           <AnimatePresence>

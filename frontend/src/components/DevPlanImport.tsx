@@ -16,6 +16,7 @@ export default function DevPlanImport({ isOpen, onClose, onImportComplete }: Dev
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isDemoError, setIsDemoError] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,7 +49,19 @@ export default function DevPlanImport({ isOpen, onClose, onImportComplete }: Dev
       });
 
       if (!res.ok) {
-        throw new Error("Failed to process document");
+        let errMsg = "Failed to process document";
+        try {
+          const errData = await res.json();
+          errMsg = errData.error || errMsg;
+        } catch(e) {}
+        
+        if (res.status === 501 || res.status === 503 || errMsg.toLowerCase().includes("not configured") || errMsg.toLowerCase().includes("not implemented")) {
+          const error: any = new Error("Document import isn't available in this demo yet — you can still see sample imported projects in the priority feed.");
+          error.isDemo = true;
+          throw error;
+        }
+
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
@@ -56,6 +69,7 @@ export default function DevPlanImport({ isOpen, onClose, onImportComplete }: Dev
       setStatus("done");
     } catch (err: any) {
       setErrorMessage(err.message || "An error occurred");
+      setIsDemoError(err.isDemo || false);
       setStatus("error");
     }
   };
@@ -65,6 +79,7 @@ export default function DevPlanImport({ isOpen, onClose, onImportComplete }: Dev
     setStatus("idle");
     setResult(null);
     setErrorMessage("");
+    setIsDemoError(false);
   };
 
   const finish = () => {
@@ -144,14 +159,16 @@ export default function DevPlanImport({ isOpen, onClose, onImportComplete }: Dev
           {status === "error" && (
             <div className="p-6 bg-red-50 border border-brand-saffron rounded-xl text-center">
               <span className="material-symbols-outlined text-4xl text-brand-saffron mb-2">error</span>
-              <h3 className="font-bold text-red-700 mb-2">Import Failed</h3>
+              <h3 className="font-bold text-red-700 mb-2">{isDemoError ? "Feature Not Available" : "Import Failed"}</h3>
               <p className="text-sm text-red-600 mb-4">{errorMessage}</p>
-              <button 
-                onClick={reset}
-                className="bg-white border border-brand-saffron text-brand-saffron px-4 py-2 rounded font-label-md hover:bg-brand-saffron/10 transition"
-              >
-                Try Again
-              </button>
+              {!isDemoError && (
+                <button 
+                  onClick={reset}
+                  className="bg-white border border-brand-saffron text-brand-saffron px-4 py-2 rounded font-label-md hover:bg-brand-saffron/10 transition"
+                >
+                  Try Again
+                </button>
+              )}
             </div>
           )}
 

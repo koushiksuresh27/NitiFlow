@@ -10,7 +10,7 @@
   "dependencies": {
     "@google-cloud/documentai": "^8.0.0",
     "@google-cloud/speech": "^7.5.0",
-    "@google/generative-ai": "^0.1.0",
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.18.1",
     "cors": "^2.8.5",

@@ -30,7 +30,42 @@ CREATE TABLE IF NOT EXISTS dev_plan_projects (
 );
 
 -- ==========================================
--- 2. ALTER EXISTING TABLES (from extracted-features)
+-- 2. CREATE EXTRACTED FEATURES TABLES
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS complaints (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    input_type text,
+    category text,
+    urgency text,
+    confidence float8,
+    summary text,
+    ward_hint text,
+    sentiment_score float8,
+    transcript text,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS complaint_clusters (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    core_issue text,
+    ward_id uuid REFERENCES wards(id),
+    complaint_count int DEFAULT 1,
+    severity_score float8,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS chronic_issues (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    title text,
+    category text,
+    urgency_level text,
+    created_at timestamptz DEFAULT now()
+);
+
+-- ==========================================
+-- 2.5 ALTER EXISTING TABLES
 -- ==========================================
 
 ALTER TABLE complaints 
