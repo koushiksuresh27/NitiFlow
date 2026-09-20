@@ -26,6 +26,12 @@ app.use('/api/ocr', require('./routes/ocr'));
 app.use('/api/aria', require('./routes/aria'));
 app.use('/api/stats', require('./routes/stats'));
 
+// Temporary debug route
+app.get('/api/debug/complaints', async (req, res) => {
+    const data = await db.query('SELECT * FROM complaints WHERE status = "open"');
+    res.json(data);
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
