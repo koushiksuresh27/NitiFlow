@@ -41,29 +41,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ------------------------------------------------------------------
-// INTENTIONAL BUG FOR TESTING ISSUESCOUT
-// This route will throw a ReferenceError because 'undefinedVariable'
-// has never been declared.
-// ------------------------------------------------------------------
+// -------------------------------------------------
+// INTENTIONAL BUG FOR ISSUESCOUT TESTING
+// Undefined variable will throw a ReferenceError.
+// -------------------------------------------------
 app.get('/api/test-error', (req, res) => {
   const result = undefinedVariable + 1;
   res.json({ result });
 });
 
-// Start Server
-const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-// Global Error Handler
+// Global Error Handler (FIXED: placed before app.listen)
 app.use((err, req, res, next) => {
   console.error('[Global Error]', err.stack);
-
   res.status(500).json({
     error: 'Internal Server Error',
     message: err.message
   });
+});
+
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
