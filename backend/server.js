@@ -43,15 +43,15 @@ app.get('/api/health', (req, res) => {
 
 // ------------------------------------------------------------------
 // INTENTIONAL BUG FOR ISSUESCOUT TESTING
-// This route uses an undefined variable, causing a ReferenceError.
+// 'priorityScore' is never declared anywhere.
 // ------------------------------------------------------------------
-app.get('/api/test-error', (req, res) => {
-  const result = undefinedVariable + 1; // <-- Intentional bug
-  res.json({ result });
+app.post('/api/test-priority', (req, res) => {
+  const score = priorityScore * 2; // Intentional ReferenceError
+  res.json({ score });
 });
 
 // ------------------------------------------------------------------
-// Global Error Handler (FIXED: registered BEFORE app.listen)
+// Global Error Handler (FIXED: before app.listen)
 // ------------------------------------------------------------------
 app.use((err, req, res, next) => {
   console.error('[Global Error]', err.stack);
@@ -62,6 +62,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Start Server
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
