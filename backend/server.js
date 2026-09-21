@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+
 app.use(cors({
   origin: [
     'https://niti-flow.vercel.app',
@@ -28,15 +29,29 @@ app.use('/api/stats', require('./routes/stats'));
 
 // Temporary debug route
 app.get('/api/debug/complaints', async (req, res) => {
-    const data = await db.query('SELECT * FROM complaints WHERE status = "open"');
-    res.json(data);
+  const data = await db.query('SELECT * FROM complaints WHERE status = "open"');
+  res.json(data);
 });
 
 // Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date()
+  });
 });
 
+// ------------------------------------------------------------------
+// INTENTIONAL BUG FOR TESTING ISSUESCOUT
+// This route will throw a ReferenceError because 'undefinedVariable'
+// has never been declared.
+// ------------------------------------------------------------------
+app.get('/api/test-error', (req, res) => {
+  const result = undefinedVariable + 1;
+  res.json({ result });
+});
+
+// Start Server
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
@@ -46,5 +61,9 @@ app.listen(PORT, () => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[Global Error]', err.stack);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message
+  });
 });
