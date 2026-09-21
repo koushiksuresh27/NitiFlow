@@ -41,18 +41,21 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// -------------------------------------------------
+// ------------------------------------------------------------------
 // INTENTIONAL BUG FOR ISSUESCOUT TESTING
-// Undefined variable will throw a ReferenceError.
-// -------------------------------------------------
+// This route uses an undefined variable, causing a ReferenceError.
+// ------------------------------------------------------------------
 app.get('/api/test-error', (req, res) => {
-  const result = undefinedVariable + 1;
+  const result = undefinedVariable + 1; // <-- Intentional bug
   res.json({ result });
 });
 
-// Global Error Handler (FIXED: placed before app.listen)
+// ------------------------------------------------------------------
+// Global Error Handler (FIXED: registered BEFORE app.listen)
+// ------------------------------------------------------------------
 app.use((err, req, res, next) => {
   console.error('[Global Error]', err.stack);
+
   res.status(500).json({
     error: 'Internal Server Error',
     message: err.message
